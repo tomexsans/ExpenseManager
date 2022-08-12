@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+.btn{
+    @apply border border-gray-300 px-3 py-2 shadow-lg hover:bg-gray-400 text-sm;
+    text-transform: uppercase;
+}

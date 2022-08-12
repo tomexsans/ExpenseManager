@@ -100,11 +100,8 @@ onMounted(()=>{
                         :chart-data="data.chartData"
                         chart-id="bar-chart"
                         dataset-id-key="label"
-                        plugins="plugins"
                         css-classes=""
-                        styles=""
-                        width="400"
-                        height="400"
+
                     />
                 </div>
             </div>

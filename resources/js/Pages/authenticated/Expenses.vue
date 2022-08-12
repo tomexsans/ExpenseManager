@@ -1,14 +1,12 @@
 <script setup>
 import BreezeAuthenticatedLayout from '@/Layouts/Authenticated.vue';
-import { Head,usePage } from '@inertiajs/inertia-vue3';
+import { Head } from '@inertiajs/inertia-vue3';
 import PageTitleVue from '@/Components/PageTitle.vue';
 import ModalVue from '@/Components/Modal.vue';
-import { onMounted, computed,reactive, watch } from 'vue';
+import { onMounted , reactive } from 'vue';
 
 import { createToaster } from "@meforma/vue-toaster";
 const toaster = createToaster({ position:'top-right' });
-const props = defineProps(['ziggy','props','pages'])
-const user = computed(() => usePage().props.value.auth.user)
 
 const state = reactive({
     expensesData:{},
@@ -56,6 +54,11 @@ const getData = () => {
 }
 
 const editExpenses = (exopense) => {
+        state.error = {
+        amount    :'',
+        entry_date   :''        
+    }
+    
     axios.get('/emgr/expenses/'+exopense.id)
         .then((response)=>{
             if(response.status == 200){ 
@@ -73,6 +76,8 @@ const editExpenses = (exopense) => {
         })
         .catch()
         .finally()
+
+
 }
 
 const addUser = () => {
@@ -93,7 +98,6 @@ const addUser = () => {
     }
 }
 
-
 const addExpensesSubmit = () => {
     axios.post('/emgr/expenses',state.form)
     .then((response)=>{
@@ -102,11 +106,11 @@ const addExpensesSubmit = () => {
                 toaster.show(`Expenses was successfully added`,{type:'success'});
                 getData()
         }
-    }).catch(errors =>{
+    }).catch(respErrors =>{
         toaster.warning(`An Error was encountered`);
-        
-        state.error.amount = errors.response.data.errors.amount ?? ''
-        state.error.entry_date = errors.response.data.errors.entry_date ?? ''
+        const errors = respErrors.response.data.errors
+        state.error.amount = errors.amount ? errors.amount.join('<br>') : ''
+        state.error.entry_date = errors.entry_date ? errors.entry_date.join('<br>') : ''
     })
 }
 const updateUserSubmit = () => {
@@ -117,9 +121,11 @@ const updateUserSubmit = () => {
                 toaster.show(`User was successfully Updated`,{type:'success'});
                 getData()
         }
-    }).catch(function(){
-        toaster.error(`An Error was encountered why deleting user`);
-
+    }).catch(respErrors => {
+        toaster.error(`An Error was encountered why updating expense`);
+        const errors = respErrors.response.data.errors
+        state.error.amount = errors.amount ? errors.amount.join('<br>') : ''
+        state.error.entry_date = errors.entry_date ? errors.entry_date.join('<br>') : ''
     })
 }
 const delUserSubmit = () => {
@@ -178,32 +184,39 @@ onMounted(()=>{
     <ModalVue :open="state.openModal" :title="state.modalTitle">
         <p class="text-center text-gray-700 p-4">{{state.resultmessage}}</p>
         <form action="" @submit.prevent="handler">
-            <div class="flex flex-col">
-                <div class="w-full text-center ">
-                    <label class="float-left ml-9 mt-3">Expense Category</label>
-                    
-                    <select  class="ml-10 w-2/4 float-right" v-model="state.form.category" required>
-                        <option v-for="(cat,i) in state.categories" :key="i" :value="cat.id">{{cat.name}}</option>
-                    </select>
-                </div>                  
-                <div class="w-full text-center mt-5">
-                    <label class="float-left ml-9 mt-3">Amount</label>
-                     <div class="ml-10 w-2/4 float-right">
-                        <input type="text" class="w-full" v-model="state.form.amount" required>
-                        <span>{{ state.error.amount }}</span>
+            <div class="">
+                <div class="w-full text-center flex flex-row justify-between">
+                    <div>
+                        <label class="">Expense Category</label>
                     </div>
-                </div>
-                <div class="w-full text-center mt-5">
-                    <label class="float-left ml-9 mt-3">Entry Date</label>
-                    <div class="ml-10 w-2/4 float-right">
-                        <input type="date" class="w-full" v-model="state.form.entry_date" required>
-                        <span>{{ state.error.entry_date }}</span>
+                    <div class="w-3/6">
+                        <select  class="w-full" v-model="state.form.category" required>
+                            <option v-for="(cat,i) in state.categories" :key="i" :value="cat.id">{{cat.name}}</option>
+                        </select>
                     </div>
-                    
+                </div>        
 
-                </div>            
-          
-                <input type="hidden" v-model="state.form.id">
+                <div class="w-full text-center flex flex-row justify-between mt-5">
+                    <div>
+                        <label>Amount</label>
+                    </div>
+                    <div class="w-3/6">
+                        <input type="text" class="w-full" v-model="state.form.amount" required>
+                        <span class="text-red-500">{{ state.error.amount }}</span>
+                    </div>
+                </div>        
+
+                <div class="w-full text-center flex flex-row justify-between mt-5">
+                    <div>
+                        <label>Entry Date</label>
+                    </div>
+                    <div class="w-3/6">
+                        <input type="date" class="w-full" v-model="state.form.entry_date" required>                
+                        <span class="text-red-500">{{ state.error.entry_date }}</span>
+                        <input type="hidden" v-model="state.form.id">
+
+                    </div>
+                </div>        
             </div>
             <div class="flex justify-between mt-6">
                 <div>

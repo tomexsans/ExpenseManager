@@ -25,8 +25,11 @@ const props = defineProps(['open','title']);
   @apply fixed border border-gray-800  bg-white;
   
   z-index: 999;
-  top: 30%;
-  left: 40%;
+  margin: auto;
+  position: relative;
+  text-align: center;
+  top: 20%;
+  width: 40%;  
   min-width: 500px;
 }
 

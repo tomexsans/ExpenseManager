@@ -42,8 +42,6 @@ class ExpensesController extends Controller
      */
     public function store(AddExpenses $request)
     {
-        //
-
         $validated = $request->validated();
 
         $expenses = new ExpensesModel;
@@ -90,9 +88,8 @@ class ExpensesController extends Controller
      * @param  \App\Models\ExpensesModel  $expense
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, ExpensesModel $expense)
+    public function update(AddExpenses $request, ExpensesModel $expense)
     {
-        //
 
         $expense->expense_category_id = $request->category;
         $expense->amount = $request->amount;

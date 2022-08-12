@@ -25,7 +25,7 @@ class AddExpenses extends FormRequest
     public function rules()
     {
         return [
-            'amount' => 'required|numeric|digits_between:1,99999',
+            'amount' => 'required|numeric|max:99999',
             'category' => 'required|numeric',
             'entry_date' => 'required|date_format:Y-m-d'
         ];

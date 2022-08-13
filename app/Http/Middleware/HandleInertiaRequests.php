@@ -36,7 +36,7 @@ class HandleInertiaRequests extends Middleware
     {
         return array_merge(parent::share($request), [
             'auth' => [
-                'role' => \App\Models\RolesModel::find(\Auth::user()->role_id,['role_name']),
+                'role' => \App\Models\RolesModel::find(\Auth::user()->role_id ?? 0,['role_name']),
                 'user' => $request->user(),
             ],
             'ziggy' => function () use ($request) {

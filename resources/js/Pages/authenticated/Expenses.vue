@@ -27,7 +27,6 @@ const state = reactive({
     }
 })
 
-
 const getCategories = () => {
     axios.get('/emgr/expensescat')
         .then((response)=>{
@@ -54,7 +53,7 @@ const getData = () => {
 }
 
 const editExpenses = (exopense) => {
-        state.error = {
+    state.error = {
         amount    :'',
         entry_date   :''        
     }
@@ -70,32 +69,45 @@ const editExpenses = (exopense) => {
                 }
 
                 state.openModal = true
-                state.modalTitle = 'Update User'
+                state.modalTitle = 'Update Expenses'
                 state.process = 'edit'
             }
         })
-        .catch()
+        .catch(errors =>{
+            toaster.error('Unable to fetch Expenses')
+            promptErrors(errors)
+        })
         .finally()
-
-
 }
 
-const addUser = () => {
-    state.openModal = true
-    state.modalTitle = 'Add User'
-    state.process = 'add'
-    
-    state.form ={
-        amount    :'',
-        entry_date   :'',
-        category :'',
-        id      : ''
-    }
 
+const modalHandler = (type,data) => {
     state.error = {
         amount    :'',
         entry_date   :''        
     }
+    if( type =='new' ){
+
+        state.openModal = true
+        state.modalTitle = 'Add Expenses'
+        state.process = 'add'
+                
+        state.form ={
+            amount    :'',
+            entry_date   :'',
+            category :'',
+            id      : ''
+        }
+    }
+
+    if( type =='edit' ){
+        editExpenses(data)
+    }
+}
+
+const promptErrors = (err) => {
+        state.error.amount = err.amount ? err.amount.join('<br>') : ''
+        state.error.entry_date = err.entry_date ? err.entry_date.join('<br>') : ''
 }
 
 const addExpensesSubmit = () => {
@@ -108,9 +120,9 @@ const addExpensesSubmit = () => {
         }
     }).catch(respErrors =>{
         toaster.warning(`An Error was encountered`);
-        const errors = respErrors.response.data.errors
-        state.error.amount = errors.amount ? errors.amount.join('<br>') : ''
-        state.error.entry_date = errors.entry_date ? errors.entry_date.join('<br>') : ''
+        if(respErrors.response.data.errors){
+            promptErrors(respErrors.response.data.errors)
+        }  
     })
 }
 const updateUserSubmit = () => {
@@ -123,9 +135,10 @@ const updateUserSubmit = () => {
         }
     }).catch(respErrors => {
         toaster.error(`An Error was encountered why updating expense`);
-        const errors = respErrors.response.data.errors
-        state.error.amount = errors.amount ? errors.amount.join('<br>') : ''
-        state.error.entry_date = errors.entry_date ? errors.entry_date.join('<br>') : ''
+
+        if(respErrors.response.data.errors){
+            promptErrors(respErrors.response.data.errors)
+        }        
     })
 }
 const delUserSubmit = () => {
@@ -245,7 +258,7 @@ onMounted(()=>{
                         </tr>
                     </thead>
                     <tbody v-if="state.expensesData">
-                        <tr @click.prevent="editExpenses(expense)" v-for="(expense,index) in state.expensesData" :key="index"
+                        <tr @click.prevent="modalHandler('edit',expense)" v-for="(expense,index) in state.expensesData" :key="index"
                             class="odd:bg-gray-100 even:bg-gray-300 hover:cursor-pointer hover:bg-slate-400">
                             <td class="px-2">{{ expense.category.category_name }}</td>
                             <td class="px-2">{{ expense.amount }}</td>
@@ -255,8 +268,8 @@ onMounted(()=>{
                     </tbody>
                 </table>
                 
-                <button class="btn float-right mt-5" @click.prevent="addUser">
-                    ADD EXPENSES {{ $page.props.userid}}
+                <button class="btn float-right mt-5" @click.prevent="modalHandler('new')">
+                    ADD EXPENSES
                 </button>
             </div>
         </div>

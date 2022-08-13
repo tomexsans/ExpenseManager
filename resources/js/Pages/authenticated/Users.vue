@@ -17,6 +17,11 @@ const state = reactive({
     modalTitle:"",    
     resultmessage:"",
     process:"",
+    errors:{
+        name:'',
+        email:'',
+        role_id:''
+    },
     roles:{},
     form:{
         name:'',
@@ -26,6 +31,15 @@ const state = reactive({
     }
 })
 
+const promptErrors = (response) => {
+
+    if(response.response.data.errors){
+        const err = response.response.data.errors
+        state.errors.name    = err.name ? err.name[0] : ''
+        state.errors.email   = err.email ? err.email[0] : ''
+        state.errors.role_id = err.role_id ? err.role_id[0] : ''
+    }
+}
 
 const getRoles = () => {
     axios.get('/emgr/roles')
@@ -69,21 +83,10 @@ const editUser = (user) => {
                 state.process = 'edit'
             }
         })
-        .catch()
-        .finally()
-}
+        .catch(errors => {
 
-const addUser = () => {
-    state.openModal = true
-    state.modalTitle = 'Add User'
-    state.process = 'add'
-    
-    state.form ={
-        name    :'',
-        email   :'',
-        role_id :'',
-        id      :''
-    }
+        })
+        .finally()
 }
 
 
@@ -91,25 +94,26 @@ const addUserSubmit = () => {
     axios.post('/emgr/users',state.form)
     .then((response)=>{
         if(response.status == 200){
-                state.openModal = false
-                toaster.show(`User was successfully added`,{type:'success'});
-                getData()
+            state.openModal = false
+            toaster.success(`User was successfully added`);
+            getData()
         }
-    }).catch(()=>{
-        toaster.show(`An Error was encountered`,{type:'danger'});
-
+    }).catch(errors=>{
+        toaster.error(`An Error was encountered`);
+        promptErrors(errors)
     })
 }
 const updateUserSubmit = () => {
         axios.put('/emgr/users/'+state.form.id,state.form)
     .then((response)=>{
         if(response.status == 200){
-                state.openModal = false
-                toaster.show(`User was successfully Updated`,{type:'success'});
-                getData()
+            state.openModal = false
+            toaster.success(`User was successfully Updated`);
+            getData()
         }
-    }).catch(function(){
-        toaster.error(`An Error was encountered why deleting user`);
+    }).catch(errors => {
+        toaster.error(errors.response.data.message ?? `An Error was encountered while updating user`);
+        promptErrors(errors)
 
     })
 }
@@ -125,9 +129,7 @@ const delUserSubmit = () => {
 
         }
     }).catch(error => {
-        console.log(error.response)
-        state.resultmessage = error.response.data.message
-        toaster.error(`An Error was encountered while deleting user`);
+        toaster.error(error.response.data.message ?? `An Error was encountered while deleting user`);
 
     })
 }
@@ -142,8 +144,34 @@ const handler = () => {
                 updateUserSubmit()
                 break;                
     }
-    
 }
+
+const modalHandler = (type,data) => {
+    state. errors ={
+        name:'',
+        email:'',
+        role_id:''
+    }
+
+    if( type =='new' ){
+
+        state.openModal = true
+        state.modalTitle = 'Add User'
+        state.process = 'add'
+        
+        state.form ={
+            name    :'',
+            email   :'',
+            role_id :'',
+            id      :''
+        }
+    }
+
+    if( type =='edit' ){
+        editUser(data)
+    }
+}
+
 onMounted(()=>{
     /*
         Get Users on mounted
@@ -158,9 +186,7 @@ onMounted(()=>{
     getRoles()
 });
 
-watch(state.openModal, (newX) => {
-    console.log(newX)
-})
+
 </script>
 
 <template>
@@ -170,19 +196,34 @@ watch(state.openModal, (newX) => {
         <p class="text-center text-gray-700 p-4">{{state.resultmessage}}</p>
         <form action="" @submit.prevent="handler">
             <div class="flex flex-col">
-                <div class="w-full text-center">
-                    <label class="float-left ml-20 mt-3">Name</label>
-                    <input type="text" class="ml-10 w-2/4 float-right" v-model="state.form.name" required>
+                <div class="flex justify-between">
+                    <div>
+                        <label class="mt-3">Name</label>
+                    </div>
+                    <div class="w-3/6">                    
+                        <input type="text" class="w-full" v-model="state.form.name" required>
+                        <span class="text-red-400">{{ state.errors.name }}</span>
+                    </div>
                 </div>
-                <div class="w-full text-center mt-5">
-                    <label class="float-left ml-20 mt-3">Email Address</label>
-                    <input type="email" class="ml-10 w-2/4 float-right" v-model="state.form.email" required>
+                <div class="flex justify-between mt-5">
+                    <div>
+                        <label class="mt-3">Email Address</label>
+                    </div>
+                    <div class="w-3/6">                    
+                        <input type="email" class="w-full" v-model="state.form.email" required>
+                        <span class="text-red-400">{{ state.errors.email }}</span>
+                    </div>
                 </div>            
-                <div class="w-full text-center mt-5">
-                    <label class="float-left ml-20 mt-3">Role</label>
-                    <select  class="ml-10 w-2/4 float-right" v-model="state.form.role_id" required>
-                        <option v-for="(role,i) in state.roles" :key="i" :value="role.id">{{role.name}}</option>
-                    </select>
+                <div class="flex justify-between mt-5">
+                    <div>
+                        <label class="mt-3">Role</label>
+                    </div>
+                    <div class="w-3/6">                    
+                        <select  class="w-full" v-model="state.form.role_id" required>
+                            <option v-for="(role,i) in state.roles" :key="i" :value="role.id">{{role.name}}</option>
+                        </select>
+                        <span class="text-red-400">{{ state.errors.role_id }}</span>
+                    </div>
                 </div>            
                 <input type="hidden" v-model="state.form.id">
             </div>
@@ -213,7 +254,7 @@ watch(state.openModal, (newX) => {
                         </tr>
                     </thead>
                     <tbody v-if="state.usersData">
-                        <tr @click.prevent="editUser(user)" v-for="(user,index) in state.usersData" :key="index"
+                        <tr @click.prevent="modalHandler('edit',user)" v-for="(user,index) in state.usersData" :key="index"
                             class="odd:bg-gray-100 even:bg-gray-300 hover:cursor-pointer hover:bg-slate-400">
                             <td class="px-2">{{ user.name }}</td>
                             <td class="px-2">{{ user.email }}</td>
@@ -223,7 +264,7 @@ watch(state.openModal, (newX) => {
                     </tbody>
                 </table>
                 
-                <button class="btn float-right mt-5" @click.prevent="addUser">
+                <button class="btn float-right mt-5" @click.prevent="modalHandler('new')">
                     ADD USER
                 </button>
             </div>

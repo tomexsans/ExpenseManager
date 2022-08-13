@@ -18,6 +18,10 @@ const state = reactive({
     resultmessage:"",
     process:"",
     roles:{},
+    errors:{
+        name:'',
+        desc:''
+    },
     form:{
         name:'',
         email:'',
@@ -68,22 +72,21 @@ const editCategory = (cat) => {
                 state.process = 'edit'
             }
         })
-        .catch()
+        .catch(errors => {
+            toaster.warning(`An Error was encountered`);
+            promptErrors(errors)
+        })
         .finally()
 }
 
-const addCategory = () => {
-    state.openModal = true
-    state.modalTitle = 'Add Category'
-    state.process = 'add'
-    
-    state.form ={
-        name    :'',
-        desc   :'',
-        id      :''
+const promptErrors = (response) => {
+
+    if(response.response.data.errors){
+        const err = response.response.data.errors
+        state.errors.name          = err.name ? err.name.join('<br>') : ''
+        state.errors.desc   = err.desc ? err.desc.join('<br>') : ''
     }
 }
-
 
 const addCategorySubmit = () => {
     axios.post('/emgr/expensescat',state.form)
@@ -93,9 +96,9 @@ const addCategorySubmit = () => {
                 toaster.show(`Category was successfully added`,{type:'success'});
                 getData()
         }
-    }).catch(()=>{
-        toaster.show(`An Error was encountered`,{type:'danger'});
-
+    }).catch(errors=>{
+        toaster.warning(`An Error was encountered`);
+        promptErrors(errors)
     })
 }
 const updateCategorySubmit = () => {
@@ -106,9 +109,9 @@ const updateCategorySubmit = () => {
                 toaster.show(`Category was successfully Updated`,{type:'success'});
                 getData()
         }
-    }).catch(function(){
-        toaster.error(`An Error was encountered why deleting category`);
-
+    }).catch(errors => {
+        toaster.error(`An Error was encountered why Updating category`);
+        promptErrors(errors)
     })
 }
 const delUserSubmit = () => {
@@ -122,8 +125,8 @@ const delUserSubmit = () => {
             toaster.warning(`An Error was encountered why deleting category`);
 
         }
-    }).catch(error => {        
-        toaster.error(error.response.data.message ?? 'An Error was encountered while deleting user');
+    }).catch(errors => {        
+        toaster.error(errors.response.data.message ?? 'An Error was encountered while deleting category');
     })
 }
 
@@ -153,9 +156,29 @@ onMounted(()=>{
     getRoles()
 });
 
-watch(state.openModal, (newX) => {
-    console.log(newX)
-})
+const modalHandler = (type,data) => {
+
+    state.errors = {
+        name:'',desc:''
+    }
+
+    if(type == 'new'){  
+        state.openModal = true
+        state.modalTitle = 'Add Category'
+        state.process = 'add'
+        
+        state.form ={
+            name    :'',
+            desc   :'',
+            id      :''
+        }
+    }
+
+    if(type == 'edit'){
+        editCategory(data)
+    }   
+}
+
 </script>
 
 <template>
@@ -165,15 +188,24 @@ watch(state.openModal, (newX) => {
         <p class="text-center text-gray-700 p-4">{{state.resultmessage}}</p>
         <form action="" @submit.prevent="handler">
             <div class="flex flex-col">
-                <div class="w-full text-center">
-                    <label class="float-left ml-20 mt-3">Name</label>
-                    <input type="text" class="ml-10 w-2/4 float-right" v-model="state.form.name" required>
+                <div class="flex flex-row w-full justify-between">
+                    <div>
+                        <label class="">Name</label>
+                    </div>
+                    <div class="w-3/6">
+                        <input type="text" class="w-full" v-model="state.form.name" required/>
+                        <span class="text-red-500">{{ state.errors.name }}</span>
+                    </div>
                 </div>
-                <div class="w-full text-center mt-5">
-                    <label class="float-left ml-20 mt-3">Description</label>
-                    <input type="text" class="ml-10 w-2/4 float-right" v-model="state.form.desc" required>
-                </div>            
-                <input type="hidden" v-model="state.form.id">
+                <div class="flex flex-row w-full justify-between mt-5">
+                    <div>
+                        <label class="">Description</label>
+                    </div>
+                    <div class="w-3/6">
+                        <input type="text" class="w-full" v-model="state.form.desc" required/>
+                        <span class="text-red-500">{{ state.errors.desc }}</span>
+                    </div>
+                </div>                            
             </div>
             <div class="flex justify-between mt-6">
                 <div>
@@ -185,6 +217,7 @@ watch(state.openModal, (newX) => {
                 </div>
                 
             </div>
+            <input type="hidden" v-model="state.form.id"/>
         </form>
     </ModalVue>
 
@@ -201,7 +234,7 @@ watch(state.openModal, (newX) => {
                         </tr>
                     </thead>
                     <tbody v-if="state.categoryData">
-                        <tr @click.prevent="editCategory(cat)" v-for="(cat,index) in state.categoryData" :key="index"
+                        <tr @click.prevent="modalHandler('edit',cat)" v-for="(cat,index) in state.categoryData" :key="index"
                             class="odd:bg-gray-100 even:bg-gray-300 hover:cursor-pointer hover:bg-slate-400">
                             <td class="px-2">{{ cat.name }}</td>
                             <td class="px-2">{{ cat.desc }}</td>
@@ -210,7 +243,7 @@ watch(state.openModal, (newX) => {
                     </tbody>
                 </table>
                 
-                <button class="btn float-right mt-5" @click.prevent="addCategory">
+                <button class="btn float-right mt-5" @click.prevent="modalHandler('new')">
                     ADD Category
                 </button>
             </div>

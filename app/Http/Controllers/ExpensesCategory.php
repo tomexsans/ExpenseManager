@@ -93,7 +93,7 @@ class ExpensesCategory extends Controller
         ]);            
 
         if ($validator->fails()) {
-            return response()->json($validator->messages(),422);
+            return response()->json(['errors'=>$validator->messages()],422);
         }   
 
         $validated = $validator->validated();

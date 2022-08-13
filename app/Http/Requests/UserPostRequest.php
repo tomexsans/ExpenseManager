@@ -24,9 +24,9 @@ class UserPostRequest extends FormRequest
     public function rules()
     {
         return [
-            "name"      => "required",
+            "name"      => "required|alpha",
             "email"     => "required|unique:users,email",
-            "role_id"   => "required"
+            "role_id"   => "required|numeric"
         ];
     }
 }

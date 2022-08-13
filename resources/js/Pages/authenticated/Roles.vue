@@ -10,15 +10,24 @@ const toaster = createToaster({ position:'top-right' });
 
 const state = reactive({
     rolesData:{},
-    openAddRole : false,
-    openUpdateRole : false,
+    openModal : false,
+    process : '',
     form:{
         role_name:'',
         role_description:'',
         id:0
+    },
+    errors:{
+        role_name : '',
+        role_description : '',
     }
 })
 
+
+const promptErrors = (err) => {
+    state.errors.role_name = err.role_name[0] ?? ''
+    state.errors.role_description = err.role_description[0] ?? ''
+}
 const getData = () => {
     axios.get('/emgr/roles')
         .then((response)=>{
@@ -30,25 +39,19 @@ const getData = () => {
         .finally()
 }
 
-const updateForm = (d) => {
-    state.openUpdateRole = true
-    state.form = {
-        role_name: d.name,
-        role_description:d.description,
-        id:d.id
-    }
-}
-
 const updateRole = () => {
     axios.put('/emgr/roles/'+state.form.id,state.form)
         .then((response)=>{
             if(response.status == 200){
                 getData()
-                state.openUpdateRole = false
+                state.openModal = false
                 toaster.success(`Role was successfully Updated`)
             }
         }).catch(error => {
             toaster.warning(error.response.data.message ?? 'An error has occured, unable to update role')
+            if(error.response.data.errors){
+                promptErrors(error.response.data.errors)
+            }
         })
 }
 
@@ -57,11 +60,16 @@ const deleteRole = () => {
         .then((response)=>{
             if(response.status == 200){
                 getData()
-                state.openUpdateRole = false
+                state.openModal = false
                 toaster.success(`Role was successfully Deleted`)
             }
         }).catch(error => {
+
+
             toaster.warning(error.response.data.message ?? 'An error has occured, unable to Delete role')
+            if(error.response.data.errors){
+                promptErrors(error.response.data.errors)
+            }
         })
 }
 
@@ -70,23 +78,63 @@ const newRole = () => {
         .then((response)=>{
             if(response.status == 200){
                 getData()
-                state.openAddRole = false
+                state.openModal = false
                 toaster.success(`Role was successfully Added`)
+                
             }
         }).catch(error => {
             toaster.warning(error.response.data.message ?? 'An error has occured, unable to Add role')
+            if(error.response.data.errors){
+                state.errors.role_name = error.response.data.errors.role_name[0] ?? ''
+                state.errors.role_description = error.response.data.errors.role_description[0] ?? ''
+            }
         })
 }
 
-const addNewRole = () => {
-    state.openAddRole = true
+
+
+const openModalHandler = (type,data) => {
+
+    state.process = type
+    state.openModal = true
+
+    //clear any errors
+    state.errors= {
+        role_name : '',
+        role_description : '',
+    }
+
+    if(type == 'new'){
+        
         state.form = {
-        role_name: '',
-        role_description:'',
-        id:0
+            role_name: '',
+            role_description:'',
+            id:0
+        }
+    }
+
+    if(type == 'edit'){
+        /*
+            Example of using data that was alreay loaded.
+            Can be used for none criticial mission data.
+        */
+        state.form = {
+            role_name: data.name,
+            role_description:data.description,
+            id:data.id
+        }
     }
 }
 
+const submitHandler = () => {
+    if(state.process == 'new'){
+        newRole()
+    }
+
+    if(state.process == 'edit'){
+        updateRole()
+    }
+}
 onMounted(()=>{
     getData()
 });
@@ -95,50 +143,39 @@ onMounted(()=>{
 <template>
     <Head title="Dashboard" />
 
-    <ModalVue :open="state.openAddRole" title="Add Role">
-        <form @submit.prevent="newRole">
-            <div class="flex flex-col">
-                <div class="w-full text-center">
-                    <label class="float-left ml-20 mt-3">Display Name</label>
-                    <input type="text" v-model="state.form.role_name" class="ml-10 w-2/4 float-right">
+    <ModalVue :open="state.openModal" title="Add Role">
+        <form @submit.prevent="submitHandler">
+            <div class="">
+                <div class="w-full flex justify-between mb-5">
+                    <div>
+                        <label class="">Display Name</label>
+                    </div>
+                    <div class="w-7/12">
+                        <input type="text" v-model="state.form.role_name" class="w-full" required>
+                        <span class="text-red-400">{{ state.errors.role_name}}</span>
+                    </div>
                 </div>
-                <div class="w-full text-center mt-5">
-                    <label class="float-left ml-20 mt-3">Description</label>
-                    <input type="text"  v-model="state.form.role_description" class="ml-10 w-2/4 float-right">
-                </div>            
+                <div class="w-full flex justify-between mb-5">
+                    <div>
+                        <label class="">Description</label>
+                    </div>
+                    <div class="w-7/12">
+                       <input type="text" v-model="state.form.role_description" class="w-full" required>
+                        <span  class="text-red-400">{{ state.errors.role_description}}</span>
+                    </div>
+                </div>                        
             </div>
-            <div class="float-right mt-5">
-                <button class="btn mr-5" @click.prevent="state.openAddRole = false">Cancel</button>        
-                <button class="btn">Save</button>        
+            <div class="w-full flex justify-between mb-5">
+                <div>
+                    <button v-if="state.process == 'edit'" type="button" @click.prevent="deleteRole" class="btn mr-5">Delete</button>        
+                </div>
+                <div>
+                    <button class="btn mr-5" @click.prevent="state.openModal = false">Cancel</button>        
+                    <button class="btn">Save</button>        
+                </div>
             </div>
         </form>
 
-    </ModalVue>
-
-    <ModalVue :open="state.openUpdateRole" title="Update Role">
-        <form @submit.prevent="updateRole">
-        <div class="flex flex-col">
-            <div class="w-full text-center">
-                <label class="float-left ml-20 mt-3">Display Name</label>
-                <input type="text" v-model="state.form.role_name" class="ml-10 w-2/4 float-right">
-            </div>
-            <div class="w-full text-center mt-5">
-                <label class="float-left ml-20 mt-3">Description</label>
-                <input type="text" v-model="state.form.role_description" class="ml-10 w-2/4 float-right">
-                <input type="hidden" v-model="state.form.id" class="ml-10 w-2/4 float-right">
-            </div>            
-        </div>
-        
-        <div class="flex justify-between mt-5">
-            <div>
-                <button type="button" @click.prevent="deleteRole" class="btn mr-5">Delete</button>        
-            </div>
-            <div>
-                <button class="btn mr-5" @click.prevent="state.openUpdateRole = false">Cancel</button>        
-                <button type="submit" class="btn">Update</button>        
-            </div>            
-        </div>
-        </form>
     </ModalVue>
 
     <BreezeAuthenticatedLayout>
@@ -154,7 +191,7 @@ onMounted(()=>{
                         </tr>
                     </thead>
                     <tbody v-if="state.rolesData">
-                        <tr @click.prevent="updateForm(roles)" v-for="(roles,index) in state.rolesData" :key="index"
+                        <tr @click.prevent="openModalHandler('edit',roles)" v-for="(roles,index) in state.rolesData" :key="index"
                             class="odd:bg-gray-100 even:bg-gray-300 hover:cursor-pointer hover:bg-slate-400">
                             <td class="px-2">{{ roles.name }}</td>
                             <td class="px-2">{{ roles.description }}</td>
@@ -163,7 +200,7 @@ onMounted(()=>{
                     </tbody>
                 </table>
                 
-                <button class="btn float-right mt-5" @click.prevent="addNewRole">
+                <button class="btn float-right mt-5" @click.prevent="openModalHandler('new')">
                     ADD Role
                 </button>
             </div>

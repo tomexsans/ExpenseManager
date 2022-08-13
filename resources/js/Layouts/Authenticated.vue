@@ -35,7 +35,10 @@ const showingNavigationDropdown = ref(false);
                                     </div>
                                     <div class="hidden sm:flex sm:items-center sm:ml-6">
                                         <div>
-                                            Welecome to Expense Manager
+                                            <BreezeResponsiveNavLink :href="route('dashboard')">
+                                                        Welecome to Expense Manager
+                                            </BreezeResponsiveNavLink>     
+                                            
                                         </div>
                                         <!-- Settings Dropdown -->
                                         <div class="ml-3 relative">
@@ -53,6 +56,9 @@ const showingNavigationDropdown = ref(false);
                                                 </template>
 
                                                 <template #content>
+                                                    <BreezeResponsiveNavLink :href="route('changepassword')" as="button">
+                                                        Change Password
+                                                    </BreezeResponsiveNavLink>                                                    
                                                     <BreezeDropdownLink :href="route('logout')" method="post" as="button">
                                                         Log Out
                                                     </BreezeDropdownLink>
@@ -89,6 +95,9 @@ const showingNavigationDropdown = ref(false);
                                     </div>
 
                                     <div class="mt-3 space-y-1">
+                                        <BreezeResponsiveNavLink :href="route('changepassword')" as="button">
+                                            Change Password
+                                        </BreezeResponsiveNavLink>
                                         <BreezeResponsiveNavLink :href="route('logout')" method="post" as="button">
                                             Log Out
                                         </BreezeResponsiveNavLink>

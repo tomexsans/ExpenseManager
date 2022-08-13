@@ -27,3 +27,13 @@
 
 - `php artisan serve` create local server
 - `npm run dev` (optional) runs webpack compiler 
+
+#### Default USERS (after running `db:seed`)
+
+| Role            |       Username       |   password   |
+|:----------------|:--------------------:|-------------:|
+| Administrator   |   admin@system.com   |   password   |
+| User            |   user@system.com    |   password   |
+
+#### Adding Users
+- When administrator adds users the default password is `password`

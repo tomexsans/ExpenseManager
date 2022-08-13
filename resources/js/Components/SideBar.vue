@@ -7,7 +7,7 @@ import { Link } from '@inertiajs/inertia-vue3';
 <template>
     <div class="px-6">
         <div class="mt-6">
-            <div class="w-24 h-24 rounded-full bg-gray-500 mb-4"></div>
+            <div class="w-24 h-24 rounded-full bg-gray-500 mb-4 mx-auto"></div>
             <Link :href="route('dashboard')" class="py-3 text-lg text-white font-bold">{{ $page.props.auth.user.name }} ({{$page.props.auth.role.role_name}})</Link>
         </div>
 

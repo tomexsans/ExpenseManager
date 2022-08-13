@@ -50,7 +50,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('authenticated/Categories');
     })->name('categories');
 
-
+    Route::get('/changepassword', function () {
+        // Matches The "/admin/users" URL
+        return Inertia::render('authenticated/changepassword');
+    })->name('changepassword');
     /*
         We can put this ont he api.php  routes and add Guards or token 
         but since no part of this will be available outside we will put it here
@@ -60,6 +63,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::apiResource('/emgr/users',\App\Http\Controllers\UserController::class);
     Route::apiResource('/emgr/expensescat',\App\Http\Controllers\ExpensesCategory::class);
     Route::apiResource('/emgr/expenses',\App\Http\Controllers\ExpensesController::class);    
+
+
+    Route::put('/changepassword',\App\Http\Controllers\ChangePassword::class);
 
     Route::get('/myexpenses',function(){
         return \App\Models\ExpensesModel::Where('user_id',Auth::id())

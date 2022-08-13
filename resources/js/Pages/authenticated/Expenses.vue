@@ -105,9 +105,14 @@ const modalHandler = (type,data) => {
     }
 }
 
-const promptErrors = (err) => {
-        state.error.amount = err.amount ? err.amount.join('<br>') : ''
-        state.error.entry_date = err.entry_date ? err.entry_date.join('<br>') : ''
+const promptErrors = (response) => {
+
+    if(response.response.data.errors){
+        const err = response.response.data.errors
+        state.error.amount = err.amount ? err.amount[0] : ''
+        state.error.entry_date = err.entry_date ? err.entry_date[0] : ''        
+    }      
+       
 }
 
 const addExpensesSubmit = () => {
@@ -120,9 +125,7 @@ const addExpensesSubmit = () => {
         }
     }).catch(respErrors =>{
         toaster.warning(`An Error was encountered`);
-        if(respErrors.response.data.errors){
-            promptErrors(respErrors.response.data.errors)
-        }  
+        promptErrors(respErrors)
     })
 }
 const updateUserSubmit = () => {
@@ -135,10 +138,7 @@ const updateUserSubmit = () => {
         }
     }).catch(respErrors => {
         toaster.error(`An Error was encountered why updating expense`);
-
-        if(respErrors.response.data.errors){
-            promptErrors(respErrors.response.data.errors)
-        }        
+        promptErrors(respErrors)
     })
 }
 const delUserSubmit = () => {
@@ -153,7 +153,6 @@ const delUserSubmit = () => {
 
         }
     }).catch(error => {
-        console.log(error.response)
         state.resultmessage = error.response.data.message
         toaster.error(`An Error was encountered while deleting user`);
 

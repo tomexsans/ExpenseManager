@@ -37,3 +37,4 @@
 
 #### Adding Users
 - When administrator adds users the default password is `password`
+- When using the Registration page `/register` the default `Role` is `Administrator`
